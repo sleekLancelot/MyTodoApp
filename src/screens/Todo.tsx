@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react'
-import {Platform, StatusBar, Dimensions} from 'react-native'
+import {Platform, StatusBar, Dimensions, Alert} from 'react-native'
 import {Layout, Text, Icon, Button, Input, List} from '@ui-kitten/components'
 import AddOrEditModal from '../components/AddOrEditModal';
 import { COLORS, MODE, TodoItemProp } from '../utils';
@@ -39,6 +39,27 @@ const TodoScreen = () => {
     }
   }
 
+  const deleteTodoItem = (todo: TodoItemProp) => {
+    Alert.alert(
+        "Delete Item",
+        `Are you sure you want to delete ${todo?.title}?`,
+        [
+            {
+                text: "Cancel",
+                style: "cancel"
+            },
+            {
+                text: "Yes", onPress: () => {
+                  const data = allTodo.filter((item, index) => item?.id !== todo?.id)
+                  setAllTodo(() => data?.map( item => item?.id < todo?.id ? item : {
+                    ...item,
+                    id: item?.id - 1,
+                  }))
+                }
+            }
+    ])
+  }
+
   return (
     <Layout style={{
       display: 'flex',
@@ -55,6 +76,7 @@ const TodoScreen = () => {
           <TodoItem
             todo={item}
             setCompleted={updateStatus}
+            deleteTodoItem={deleteTodoItem}
           />
         )}
       />

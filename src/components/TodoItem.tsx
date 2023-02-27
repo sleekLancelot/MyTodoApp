@@ -1,4 +1,4 @@
-import { CheckBox, ListItem, Text } from '@ui-kitten/components'
+import { CheckBox, Layout, ListItem, Text, Button, Icon } from '@ui-kitten/components'
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { COLORS, TodoItemProp } from '../utils'
@@ -6,10 +6,12 @@ import { COLORS, TodoItemProp } from '../utils'
 interface TodoItemCompProp {
     todo: TodoItemProp
     setCompleted: Function
+    deleteTodoItem: Function
 }
 const TodoItem = ({
     todo,
     setCompleted,
+    deleteTodoItem,
 }: TodoItemCompProp) => {
     const now = new Date()
 
@@ -21,6 +23,63 @@ const TodoItem = ({
 
         // console.log(todo)
     }, [checked])
+
+    const pulseIconRef = React.useRef();
+
+    const RightSide = (props: any) => (
+        <View style={{
+            maxHeight: '40%',
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: "center",
+            justifyContent: "space-between",
+        }}>
+            <Button style={{
+                width: 20,
+                height: 20,
+                backgroundColor: 'transparent',
+                borderColor: 'transparent',
+            }}>
+                <Icon
+                    {...props}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: 'black',
+                    }}
+                    name='edit'
+                    ref={pulseIconRef}
+                    animation='pulse'
+                />
+            </Button>
+
+            <Button
+                style={{
+                    width: 20,
+                    height: 20,
+                    backgroundColor: 'transparent',
+                    borderColor: 'transparent',
+                }}
+                onPress={() => deleteTodoItem(todo)}
+            >
+                <Icon
+                    {...props}
+                    style={{
+                        width: '100%',
+                        height: '100%',
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: COLORS.accent,
+                    }}
+                    name='trash-2-outline'
+                    ref={pulseIconRef}
+                    animation='pulse'
+                />
+            </Button>
+        </View>
+    )
 
   return (
     <ListItem
@@ -51,7 +110,7 @@ const TodoItem = ({
                 onChange={setChecked}
             />
         )}
-        // accessoryRight={}
+        accessoryRight={RightSide}
         title={(evaProps: any) => <Text
             {...evaProps}
             style={{
