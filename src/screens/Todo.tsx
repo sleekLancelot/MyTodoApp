@@ -39,6 +39,27 @@ const TodoScreen = () => {
     }
   }
 
+  const startEditProcess = (todo: TodoItemProp) => {
+    setItemToEdit(() => todo)
+    setMode(() => MODE.EDIT)
+    setVisible(true)
+  }
+
+  useEffect(() => {
+    if (
+        visible &&
+        (!itemToEdit.hasOwnProperty('id') || !itemToEdit.hasOwnProperty('title'))
+      ) {
+      setMode(MODE.CREATE)
+    }
+  },[itemToEdit, visible])
+
+  useEffect(() => {
+    if (!visible) {
+      setItemToEdit({} as TodoItemProp)
+    }
+  },[visible])
+
   const deleteTodoItem = (todo: TodoItemProp) => {
     Alert.alert(
         "Delete Item",
@@ -77,16 +98,10 @@ const TodoScreen = () => {
             todo={item}
             setCompleted={updateStatus}
             deleteTodoItem={deleteTodoItem}
+            startEditProcess={startEditProcess}
           />
         )}
       />
-
-      {/* {
-        !!allTodo?.length &&
-        allTodo?.map((todo, index) => (
-          <TodoItem todo={todo} setCompleted={() => {}} />
-        ))
-      } */}
 
       <AddOrEditModal
         visible={visible}

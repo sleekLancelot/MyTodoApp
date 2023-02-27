@@ -47,21 +47,19 @@ const AddOrEditModal = ({
     const [todoDetails, setTodoDetails] = useState(initialDetails)
 
     useEffect(() => {
-        // console.log(todoDetails, 'todo in form')
         if (!visible) {
             setTodoDetails(initialDetails)
         }
     },[visible])
 
-    const addTodo = (todo: TodoItemProp) => {
-        // const newTodos = [...allTodo, {
-        //     id: allTodo?.reduce((acc, cur) => {
-        //       if (cur.id > acc.id) return cur;
-        //       return acc;
-        //     }).id + 1, value: todo
-        //   }];
-        //   setAllTodo(newTodos);
+    useEffect(() => {
+        if (!!itemToEdit.hasOwnProperty('id') || !!itemToEdit.hasOwnProperty('title')) {
+            setTodoDetails(() => itemToEdit)
+            console.log(mode, todoDetails)
+        }
+    },[itemToEdit])
 
+    const addTodo = (todo: TodoItemProp) => {
         if (todo?.id !== undefined) {
             setAllTodo((atd: Array<TodoItemProp>) => ([
                 {...todo, id: incrementId()},
@@ -70,16 +68,18 @@ const AddOrEditModal = ({
         }
     }
 
-    const editTodo = () => {}
+    const editTodo = (todo: TodoItemProp) => {
+        if (todo?.id !== undefined) {
+            setAllTodo((atd: Array<TodoItemProp>) => atd?.map(item => item?.id === itemToEdit?.id ? todoDetails : item))
+        }
+    }
 
     const onSubmit = () => {
         if (mode === MODE.CREATE) {
             addTodo(todoDetails)
         } else {
-            editTodo()
+            editTodo(todoDetails)
         }
-        setTodoDetails(initialDetails)
-        close()
     }
 
     const invalid = () => !todoDetails?.id || !todoDetails?.title
@@ -128,15 +128,6 @@ const AddOrEditModal = ({
                 accessoryRight={CalendarIcon}
             />
 
-        {/* <Input
-            style={styles.input}
-            multiline={true}
-            textStyle={{ minHeight: 64 }}
-            placeholder='Add a note'
-            value={todoDetails.note}
-            onChangeText={() => {}}
-        /> */}
-
             <Button
                 style={{
                     marginLeft: 'auto',
@@ -147,9 +138,13 @@ const AddOrEditModal = ({
                     borderColor: 'transparent'
                 }}
                 disabled={invalid()}
-                onPress={onSubmit}
+                onPress={() => {
+                    onSubmit()
+                    setTodoDetails(initialDetails)
+                    close()
+                }}
             >
-                submit
+                {mode === MODE.CREATE ? 'Add' : 'Edit'}
             </Button>
         </Layout>
     </Modal>

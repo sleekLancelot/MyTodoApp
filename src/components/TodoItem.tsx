@@ -7,11 +7,13 @@ interface TodoItemCompProp {
     todo: TodoItemProp
     setCompleted: Function
     deleteTodoItem: Function
+    startEditProcess: Function
 }
 const TodoItem = ({
     todo,
     setCompleted,
     deleteTodoItem,
+    startEditProcess,
 }: TodoItemCompProp) => {
     const now = new Date()
 
@@ -34,12 +36,15 @@ const TodoItem = ({
             alignItems: "center",
             justifyContent: "space-between",
         }}>
-            <Button style={{
-                width: 20,
-                height: 20,
-                backgroundColor: 'transparent',
-                borderColor: 'transparent',
-            }}>
+            <Button
+                style={{
+                    width: 20,
+                    height: 20,
+                    backgroundColor: 'transparent',
+                    borderColor: 'transparent',
+                }}
+                onPress={() => startEditProcess(todo)}
+            >
                 <Icon
                     {...props}
                     style={{
