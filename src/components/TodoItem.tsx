@@ -2,6 +2,7 @@ import { CheckBox, Layout, ListItem, Text, Button, Icon } from '@ui-kitten/compo
 import React, { useEffect, useState } from 'react'
 import { View } from 'react-native'
 import { COLORS, TodoItemProp } from '../utils'
+import moment from 'moment'
 
 interface TodoItemCompProp {
     todo: TodoItemProp
@@ -18,7 +19,7 @@ const TodoItem = ({
     const now = new Date()
 
     const [today] = useState(now)
-    const [checked, setChecked] = React.useState(false);
+    const [checked, setChecked] = React.useState(!!todo?.completed);
 
     useEffect(() => {
         setCompleted(checked, todo?.id)
@@ -129,9 +130,9 @@ const TodoItem = ({
             style={{
                 // fontSize: 18,
                 // fontWeight: 600,
-                color: today > todo?.date ? 'red' : 'black'
+                color: today > new Date(`${todo?.date}`) ? 'red' : 'black'
             }}
-        >{todo?.date?.toDateString()}</Text>}
+        >{moment(todo?.date)?.fromNow()}</Text>}
     />
   )
 }

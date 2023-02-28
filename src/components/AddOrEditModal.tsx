@@ -1,7 +1,9 @@
 import React, {useCallback, useEffect, useMemo, useState} from 'react'
 import {StyleSheet} from 'react-native'
 import {Modal, Card, Button, Text, Input, Layout, Datepicker, Icon} from '@ui-kitten/components'
-import { COLORS, TodoItemProp, MODE } from '../utils'
+import moment from 'moment';
+import { MomentDateService } from '@ui-kitten/moment';
+import { COLORS, TodoItemProp, MODE, getDBConnection, saveTodoItems, updateTodoItems } from '../utils'
 
 interface AddOrEditModalProps {
     visible: boolean
@@ -16,6 +18,8 @@ const CalendarIcon = (props: any) => (
     <Icon {...props} name='calendar'/>
   );
 
+  const dateService = new MomentDateService();
+
 const AddOrEditModal = ({
     visible,
     close,
@@ -25,6 +29,7 @@ const AddOrEditModal = ({
     setAllTodo,
 }: AddOrEditModalProps) => {
     const now = new Date()
+    const momentNow = moment()
 
     const incrementId = useCallback(() => {
         if (!!allTodo?.length) {
@@ -39,7 +44,7 @@ const AddOrEditModal = ({
 
     const initialDetails = useMemo(() => ({
         title: itemToEdit?.title || '',
-        date: itemToEdit?.date ?? now,
+        date: itemToEdit?.date || now,
         completed: itemToEdit.completed ?? false,
         id: itemToEdit?.id ?? incrementId(),
     }), [itemToEdit])
@@ -59,18 +64,32 @@ const AddOrEditModal = ({
         }
     },[itemToEdit])
 
-    const addTodo = (todo: TodoItemProp) => {
-        if (todo?.id !== undefined) {
-            setAllTodo((atd: Array<TodoItemProp>) => ([
-                {...todo, id: incrementId()},
-                ...atd,
-            ]))
+    const addTodo = async (todo: TodoItemProp) => {
+
+        try {
+            if (todo?.id !== undefined) {
+                setAllTodo((atd: Array<TodoItemProp>) => ([
+                    {...todo, id: incrementId()},
+                    ...atd,
+                ]))
+                const db = await getDBConnection();
+                await saveTodoItems(db, {...todo, id: incrementId()});
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
-    const editTodo = (todo: TodoItemProp) => {
-        if (todo?.id !== undefined) {
-            setAllTodo((atd: Array<TodoItemProp>) => atd?.map(item => item?.id === itemToEdit?.id ? todoDetails : item))
+    const editTodo = async (todo: TodoItemProp) => {
+        try {
+            if (todo?.id !== undefined) {
+                setAllTodo((atd: Array<TodoItemProp>) => atd?.map(item => item?.id === itemToEdit?.id ? todoDetails : item))
+
+                const db = await getDBConnection();
+                await updateTodoItems(db, todoDetails);
+            }
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -81,6 +100,8 @@ const AddOrEditModal = ({
             editTodo(todoDetails)
         }
     }
+
+    const parseDate = (date: any) => new Date(`${date}`)?.toISOString()
 
     const invalid = () => !todoDetails?.id || !todoDetails?.title
 
@@ -120,9 +141,11 @@ const AddOrEditModal = ({
                 // caption='Select due date'
                 placeholder='Pick Date'
                 min={now}
-                date={todoDetails.date}
-                onSelect={(nextDate: any) => setTodoDetails((td) => ({
-                    ...todoDetails,
+                // date={parseDate(todoDetails?.date)}
+                date={typeof todoDetails?.date !== 'object' ? new Date(todoDetails?.date) : todoDetails?.date}
+                // dateService={dateService as any}
+                onSelect={(nextDate: Date) => setTodoDetails((td) => ({
+                    ...td,
                     date: nextDate,
                 }))}
                 accessoryRight={CalendarIcon}

@@ -1,8 +1,8 @@
-import {useEffect, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import {Platform, StatusBar, Dimensions, Alert} from 'react-native'
 import {Layout, Text, Icon, Button, Input, List} from '@ui-kitten/components'
 import AddOrEditModal from '../components/AddOrEditModal';
-import { COLORS, MODE, TodoItemProp } from '../utils';
+import { COLORS, MODE, TodoItemProp, createTable, deleteTable, deleteTodoItemFromDB, getDBConnection, getTodoItems, updateTodoItemStatus } from '../utils';
 import { TodoItem } from '../components';
 
 const AddIcon = (props: any) => (
@@ -27,15 +27,40 @@ const TodoScreen = () => {
   const [itemToDelete, setItemToDelete] = useState({})
   const [mode, setMode] = useState(MODE.CREATE)
 
+  const loadDataCallback = useCallback(async () => {
+    try {
+      const db = await getDBConnection();
+      await createTable(db);
+      const storedTodoItems = await getTodoItems(db);
+      if (storedTodoItems.length) {
+        console.log(storedTodoItems, 'stored')
+        setAllTodo(storedTodoItems);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDataCallback();
+  }, [loadDataCallback]);
+
   useEffect(() => {
     console.log(allTodo, 'all todo')
   },[allTodo])
 
-  const updateStatus = (status: boolean, id: number) => {
-    if (id !== undefined) {
-      let newTodos: Array<TodoItemProp> = allTodo?.map( (todo: TodoItemProp) => todo?.id === id ? {...todo, completed: status} : todo)
+  const updateStatus = async (status: boolean, id: number) => {
+    try {
+      if (id !== undefined) {
+        let newTodos: Array<TodoItemProp> = allTodo?.map( (todo: TodoItemProp) => todo?.id === id ? {...todo, completed: status} : todo)
+  
+        setAllTodo(() => newTodos)
 
-      setAllTodo(() => newTodos)
+        const db = await getDBConnection();
+        await updateTodoItemStatus(db, status, id);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }
 
@@ -60,6 +85,19 @@ const TodoScreen = () => {
     }
   },[visible])
 
+  // useEffect(() => {
+  //   const drop = async () => {
+  //     try {
+  //       const db = await getDBConnection();
+  //       deleteTable(db)
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   }
+
+  //   drop()
+  // },[])
+
   const deleteTodoItem = (todo: TodoItemProp) => {
     Alert.alert(
         "Delete Item",
@@ -70,12 +108,19 @@ const TodoScreen = () => {
                 style: "cancel"
             },
             {
-                text: "Yes", onPress: () => {
-                  const data = allTodo.filter((item, index) => item?.id !== todo?.id)
-                  setAllTodo(() => data?.map( item => item?.id < todo?.id ? item : {
-                    ...item,
-                    id: item?.id - 1,
-                  }))
+                text: "Yes", onPress: async () => {
+                  try {
+                    const data = allTodo.filter((item, index) => item?.id !== todo?.id)
+                    setAllTodo(() => data?.map( item => item?.id < todo?.id ? item : {
+                      ...item,
+                      id: item?.id - 1,
+                    }))
+
+                    const db = await getDBConnection();
+                    await deleteTodoItemFromDB(db, todo?.id);
+                  } catch (error) {
+                    console.log(error)
+                  }
                 }
             }
     ])
